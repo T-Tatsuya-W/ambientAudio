@@ -88,9 +88,9 @@ function updateAudio(){if(!ctx)return;const t=ctx.currentTime;master.gain.setTar
 }
 function makeVoice(midi,now,duration){const amp=ctx.createGain();amp.gain.setValueAtTime(0,now);amp.gain.linearRampToValueAtTime(.44,now+Math.min(2.8,duration*.35));amp.gain.setValueAtTime(.44,now+duration);amp.gain.linearRampToValueAtTime(0,now+duration+3);amp.connect(padBus);
  const pair=[{type:'sine',detune:-3,gain:.65},{type:'triangle',detune:3,gain:.17}];const oscillators=[];for(const p of pair){const o=ctx.createOscillator(),g=ctx.createGain();o.type=p.type;o.frequency.value=hz(midi);o.detune.value=p.detune;g.gain.value=p.gain;o.connect(g).connect(amp);o.start(now);o.stop(now+duration+3.1);oscillators.push(o)}
- oscillators[0].onended=()=>{try{amp.disconnect()}catch{}};voices.push(...oscillators)
+ oscillators[0].onended=()=>{try{amp.disconnect()}catch{};voices=voices.filter(o=>!oscillators.includes(o))};voices.push(...oscillators)
 }
-function playChord(){if(!ctx||!active)return;const notes=chords[state.palette][chordIndex%4],now=ctx.currentTime,duration=Number(state.tempo);chordIndex++;for(const n of notes)makeVoice(n,now,duration);voices=voices.filter(o=>o.context.state!=='closed');chordTimer=setTimeout(playChord,duration*1000)}
+function playChord(){if(!ctx||!active)return;const notes=chords[state.palette][chordIndex%4],now=ctx.currentTime,duration=Number(state.tempo);chordIndex++;for(const n of notes)makeVoice(n,now,duration);chordTimer=setTimeout(playChord,duration*1000)}
 function stopVoices(){for(const o of voices){try{o.stop()}catch{}}voices=[]}
 async function start(){if(active)return;try{
  ctx=new AudioContext();await ctx.resume();master=ctx.createGain();master.gain.value=0;const compressor=ctx.createDynamicsCompressor();compressor.threshold.value=-15;compressor.knee.value=16;compressor.ratio.value=10;compressor.attack.value=.005;compressor.release.value=.2;compressor.connect(master).connect(ctx.destination);
