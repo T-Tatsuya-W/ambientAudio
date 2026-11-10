@@ -2,7 +2,7 @@ import {progressions,getReferenceHz} from './music.js';
 import {AmbientEngine} from './audio-engine.js';
 
 const defaults={master:25,palette:'warm',tempo:10,pad:65,noise:18,noiseColour:'pink',
- brightness:950,motion:true,amOn:true,amFreq:16,amDepth:45,
+ brightness:950,motion:true,amOn:true,amMode:'inphase',amFreq:16,amDepth:45,
  binauralOn:false,beat:16,droneLevel:34,customRoot:false,rootHz:130.81};
 const el=id=>document.getElementById(id);
 const ids=Object.keys(defaults);
@@ -14,6 +14,7 @@ try{
  for(const id of ids)if(typeof saved[id]===typeof defaults[id])state[id]=saved[id];
 }catch{}
 if(!progressions[state.palette])state.palette='warm';
+if(!['inphase','alternating'].includes(state.amMode))state.amMode='inphase';
 if(!['white','pink','brown','grey','orange'].includes(state.noiseColour))state.noiseColour='pink';
 if(!Number.isFinite(state.rootHz)||state.rootHz<55||state.rootHz>440)state.rootHz=defaults.rootHz;
 const engine=new AmbientEngine({
