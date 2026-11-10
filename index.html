@@ -35,10 +35,10 @@
   <section class="card">
     <h2>Sound generator</h2>
     <div class="cols">
-      <div class="control"><label for="palette">Chord palette</label><select id="palette"><option value="warm">Warm / major seventh</option><option value="dream">Dreamy / suspended</option><option value="minor">Dusky / minor</option></select></div>
+      <div class="control"><label for="palette">Chord palette</label><select id="palette"><option value="warm">Warm / major seventh</option><option value="dream">Dreamy / suspended</option><option value="minor">Dusky / minor</option><option value="horizon">Horizon / 8 chords</option><option value="night">Nightfall / 8 chords</option><option value="floating">Floating / 12 chords</option><option value="journey">Slow journey / 16 chords</option></select></div>
       <div class="control"><label for="tempo">Chord duration <output id="tempoVal"></output></label><input id="tempo" type="range" min="4" max="20" value="10" step="1"></div>
     </div>
-    <div class="control"><label for="pad">Pad level <output id="padVal"></output></label><input id="pad" type="range" min="0" max="100" value="65"></div>
+    <p id="progressionInfo" class="hint" aria-live="polite"></p><div class="control"><label for="pad">Pad level <output id="padVal"></output></label><input id="pad" type="range" min="0" max="100" value="65"></div>
     <div class="control"><label for="noise">Soft noise level <output id="noiseVal"></output></label><input id="noise" type="range" min="0" max="100" value="18"></div>
     <div class="control"><label for="brightness">Pad brightness <output id="brightnessVal"></output></label><input id="brightness" type="range" min="150" max="2500" value="950" step="10"></div>
     <label class="switch"><input id="motion" type="checkbox" checked> Gentle filter movement</label>
@@ -63,9 +63,10 @@
     <div class="bar"><button id="bypass" type="button">Bypass all modulation</button><button id="reset" type="button">Reset settings</button></div>
     <p class="hint">Toggle effects while holding the background music constant. For a fairer comparison, match perceived loudness and record your actual task results.</p>
   </section>
-  <footer>Locally synthesised with the Web Audio API · Works offline after first successful load · Background playback may be interrupted by mobile OS power management.</footer>
+  <footer>Locally synthesised with the Web Audio API · Works offline after first successful load · Media controls depend on browser support; Android may still suspend audio when locked.</footer>
 </main>
-<script type="module">
+<script type="module" src="./app.js"></script>
+<!--
 const defaults={master:25,palette:'warm',tempo:10,pad:65,noise:18,brightness:950,motion:true,amOn:true,amFreq:16,amDepth:45,binauralOn:false,carrier:220,beat:16,binauralMix:12};
 const ids=Object.keys(defaults);const el=id=>document.getElementById(id);
 let state={...defaults};try{const saved=JSON.parse(localStorage.getItem('ambient-audio-settings')||'{}');for(const id of ids){if(typeof saved[id]===typeof defaults[id])state[id]=saved[id]}}catch{}
@@ -110,6 +111,6 @@ el('bypass').addEventListener('click',()=>{const bypass=state.amOn||state.binaur
 el('reset').addEventListener('click',()=>{state={...defaults};localStorage.removeItem('ambient-audio-settings');refresh();updateAudio();el('bypass').textContent='Bypass all modulation'});
 document.addEventListener('visibilitychange',()=>{if(ctx&&ctx.state==='suspended')el('status').textContent='Audio paused by browser; reopen app to resume'});
 refresh();if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.warn));
-</script>
+-->
 </body>
 </html>
