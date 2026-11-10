@@ -1,63 +1,76 @@
 # Ambient Audio Lab
 
-Free, offline-capable generative ambient synthesiser and acoustic modulation playground, built with the **native Web Audio API**. No backend or external dependencies.
+A free, offline-capable ambient synth and acoustic experiment lab. Native Web Audio API, no account, backend or paid dependencies.
 
-## Demo
+## Features
+- Seven original progressions (4–16 chords) plus **Pedal Drone** and **Microtonal Drone**.
+- All chords use pitch definitions relative to a **reference frequency**, with optional arbitrary root Hz override.
+- **No MIDI dependency at the synth boundary:** `scheduleFrequencies([220, 261.63, 329.63], start, duration)` takes Hz values directly.
+- A steady, uninterrupted drone on supported progressions (not retriggered for each chord).
+- Optional binaural **replacement** of the drone: left ear `rootHz - beatHz/2`, right ear `rootHz + beatHz/2`. Other presets disable binaural controls.
+- Streaming `AudioWorklet` noise textures: white, pink, brown, grey-like and warm orange. Noise runs independently of the amplitude-modulated pads.
+- AM modulation, volume controls, 60-second lookahead scheduling, media-session controls where supported, PWA and offline caching.
 
-- Seven chord progressions: three 4-chord presets, two 8-chord presets, one 12-chord preset and one 16-chord preset, with duration and chord names displayed
-- Synthetic pink-ish noise, filter brightness and slow motion
-- Adjustable amplitude modulation (1–40 Hz, 0–100% depth)
-- Optional independent binaural tones with stereo separation (headphones required)
-- Bypass, master volume, basic compressor, and locally saved settings
-- Pause/resume/stop, Media Session lock-screen metadata and play/pause actions where supported
-- Lookahead scheduler (90 seconds of AudioContext-timed notes) to reduce JavaScript background throttling interruptions
-- Seam-smoothed noise loop to reduce periodic clicking
-- Mobile-friendly UI, PWA manifest, offline service worker
+## Structure
+- `music.js` — progression definitions and pitch resolution, no audio nodes.
+- `audio-engine.js` — Web Audio synthesiser taking frequency arrays in Hz; chord scheduling, continuous drone, binaural replacement, mixer, Media Session.
+- `noise-processor.js` — AudioWorklet continuous noise; random samples rather than a looped audio file.
+- `app.js` — UI state and controls.
+- `index.html` — standalone static UI.
+- `sw.js` — offline cache.
+- `manifest.webmanifest`, `icon.*` — Android install assets.
 
-This is an experimental audio playground, **not** a scientifically verified treatment or a reproduction of Brain.fm's proprietary algorithm.
+## Pitch representation
 
-## Local run
+Progressions specify a root in Hz and each chord is a list of pitch definitions relative to it:
 
-```bash
+```js
+const chord = [
+  7,                    // seven semitones above root
+  {cents: 350},         // fractional semitone / microtonality
+  {ratio: 3 / 2},       // just intonation interval
+  {offsetHz: 22.5},     // additive frequency offset
+  {hz: 280.25}         // absolute frequency (ignores reference root)
+];
+```
+
+`resolvePitch(rootHz,pitch)` in `music.js` turns these into Hz. The synth consumes only resolved Hz values. MIDI numbers are used only in a compatibility helper to preserve pitches of the original presets. Future note pickers can generate any frequencies.
+
+The drone is a separate oscillator tied to the reference root frequency, held continuously across chord changes. It is deliberately excluded from each chord's scheduled note list. The mono drone crossfades to/from an equal-level stereo pair for binaural listening. **Headphones required.** Binaural frequencies are symmetric around the root frequency, which is their arithmetic midpoint; the frequency difference is the beat rate.
+
+## Noise colour notes
+
+`noise-processor.js` continuously produces new samples rather than playing a short loop. White noise has a flat input spectrum; pink and brown use filtering. “Grey” and “orange” are *creative approximations*, not standardised, measured spectral equal-loudness curves. A smoothed ~80ms colour transition prevents abrupt jumps. In browsers without AudioWorklet support, a looped pink-ish fallback is used (colour choices won't be fully available).
+
+Noise is deliberately **not** affected by the AM depth control; AM modulates the chord pads only. This prevents the noise bed from rhythmically dipping at 1–40 Hz.
+
+## Running and publishing
+
+Run locally via a local webserver, not `file://`:
+
+```sh
 python -m http.server 8000
 ```
 
-Open http://localhost:8000 and tap **Start audio**. Browser audio must be activated by user interaction.
+Visit http://localhost:8000. In GitHub **Settings → Pages**, use **Deploy from a branch → main → /(root)**. GitHub's built-in Pages deployment does the publishing; there is no custom Action workflow.
 
-## Publish with GitHub Pages
+Site URL once deployed: https://t-tatsuya-w.github.io/ambientAudio/
 
-1. In **Settings → Pages**, select **Deploy from a branch** with branch **main**, folder **/(root)**.
-2. GitHub's built-in **pages build and deployment** workflow deploys the static files on pushes to `main`. Do not also enable a separate Pages deployment workflow.
-3. After deployment, open https://t-tatsuya-w.github.io/ambientAudio/
-4. On Android Chrome, use the browser menu → **Install app** / **Add to Home screen**.
+On Android Chrome use **Install app** / **Add to Home screen**. A new service worker cache version forces offline assets to update after reloading.
 
-After an initial successful load, the service worker caches the app for offline use. Audio playback while the phone is locked may still be stopped by Android/browser power management. The app tries to expose Android media controls using the Media Session API and an HTML audio element fed by Web Audio; this is browser-dependent and cannot guarantee uninterrupted locked-screen playback.
+## Android background playback: limitations
 
-## Signal processing notes
+The PWA registers Media Session metadata and play/pause handlers and routes the Web Audio output through an HTML audio element when the browser allows. This *can* make Android show lock-screen media controls, but **it cannot guarantee background playback**: Android or Chrome may suspend the Web Audio context. The lookahead scheduler reduces JavaScript timer throttling, but does not prevent full context suspension.
 
-The AM oscillator controls the ambient gain around `1 - depth/2` with amplitude `depth/2`, maintaining a nonnegative envelope. The binaural layer separately generates carrier and carrier+beat tones on left/right channels. They are different effects: the binaural layer isn't applied to existing music. Use stereo headphones for binaural listening.
+If uninterrupted locked-screen audio becomes an essential requirement, a dedicated **Android app with a foreground media playback service (Media3 MediaSessionService)** is a more reliable architecture. A thin Capacitor WebView wrapper by itself is not sufficient; the synthesiser would need to run in an audio pipeline owned by the service or be provided as continuously playable audio.
 
-Audio is generated locally. Only user settings are stored in localStorage. There are no telemetry or network audio requests.
+## Experiments and safety
 
-## Playback diagnosis
+These acoustic effects are not proven focus treatments. Start at a low volume and use stereo headphones for binaural experiments. The dynamics compressor is not a hearing-safety guarantee. Browser playback and battery behaviour need real device testing.
 
-There is **no intentionally configured session time limit**. The original version scheduled chords with a JavaScript timeout; Android can throttle that in the background. This version schedules chords 90 seconds ahead on the Web Audio clock. A true AudioContext suspension will still stop sound; reopen the app and tap Resume if that occurs. The short noise buffer previously looped without matching its first and last samples, another possible source of periodic clicks.
+## Potential next steps
 
-## Possible next iterations
-
-- Musical arpeggios, plucks, and richer chord transitions
-- Pulse shaping and other modulation waveforms
-- Controlled A/B or blinded experiments, session timer and CSV logging
-- Level-matched comparison, analyser and spectrum display
-- More reliable background audio testing on Android
-
-## Files
-
-```
-index.html                   # UI and audio controls
-app.js                       # Web Audio synthesis and scheduling
-manifest.webmanifest         # Installation metadata
-sw.js                        # Offline caching
-icon.svg, icon-*.png         # PWA icons
-GitHub Pages branch publishing is configured in repository Settings (no custom workflow needed)
-```
+- Blinded A/B experiment mode and CSV logs.
+- Additional synthesis methods with arbitrary Hz inputs and generative atonal composition.
+- Better chord voice leading, crossfade on changing progression and custom progression editing.
+- A native Android foreground service for persistent background generation.
