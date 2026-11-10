@@ -26,11 +26,10 @@ Open http://localhost:8000 and tap **Start audio**. Browser audio must be activa
 
 ## Publish with GitHub Pages
 
-1. Visit **Settings → Pages** and set **Build and deployment → Source: GitHub Actions**.
-2. Make sure the repository's visibility and your GitHub plan support Pages. This repository was **private** at the time of the first commit; you may need to make it public.
-3. The supplied workflow builds nothing and deploys the static files on pushes to `main`.
-4. Once GitHub Pages completes, open https://t-tatsuya-w.github.io/ambientAudio/
-5. On Android Chrome, use the browser menu → **Install app** / **Add to Home screen**.
+1. In **Settings → Pages**, select **Deploy from a branch** with branch **main**, folder **/(root)**.
+2. GitHub's built-in **pages build and deployment** workflow deploys the static files on pushes to `main`. Do not also enable a separate Pages deployment workflow.
+3. After deployment, open https://t-tatsuya-w.github.io/ambientAudio/
+4. On Android Chrome, use the browser menu → **Install app** / **Add to Home screen**.
 
 After an initial successful load, the service worker caches the app for offline use. Audio playback while the phone is locked may still be stopped by Android/browser power management. The app tries to expose Android media controls using the Media Session API and an HTML audio element fed by Web Audio; this is browser-dependent and cannot guarantee uninterrupted locked-screen playback.
 
@@ -55,9 +54,10 @@ There is **no intentionally configured session time limit**. The original versio
 ## Files
 
 ```
-index.html                   # UI and Web Audio synthesis
+index.html                   # UI and audio controls
+app.js                       # Web Audio synthesis and scheduling
 manifest.webmanifest         # Installation metadata
 sw.js                        # Offline caching
 icon.svg, icon-*.png         # PWA icons
-.github/workflows/pages.yml  # GitHub Pages publishing
+GitHub Pages branch publishing is configured in repository Settings (no custom workflow needed)
 ```
