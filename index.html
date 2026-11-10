@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101827"><meta name="description" content="Offline ambient synthesiser and auditory modulation experiment lab.">
+  <link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <title>Ambient Audio Lab</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1220;color:#e9f0fc}
+    *{box-sizing:border-box}body{margin:0;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+    main{max-width:760px;margin:auto;padding:24px 18px 60px}.eyebrow{color:#80b9ae;font-size:.76rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
+    h1{margin:5px 0;font-size:2.1rem;letter-spacing:-.04em}p{color:#a8bad0;line-height:1.5}header{margin-bottom:22px}
+    .card{background:#162238;border:1px solid #293b54;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 8px 30px #0002}
+    h2{font-size:1.08rem;margin:0 0 16px}.bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+    button{cursor:pointer;border:1px solid #40516c;color:#e8f5f5;background:#233650;padding:12px 16px;border-radius:12px;font-weight:750;font-size:.94rem}
+    button.primary{background:#4ed5b3;border-color:#4ed5b3;color:#071b20}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #4ed5b3;outline-offset:3px}
+    .subtle{font-size:.84rem;color:#9eb0c8}.status{font-size:.83rem;color:#9ab4d1}
+    .control{margin:17px 0}.control label{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:7px;font-size:.95rem}
+    output{color:#61e1c2;font-weight:700;font-variant-numeric:tabular-nums}
+    input[type=range]{width:100%;accent-color:#5cd9bb;height:25px;cursor:pointer}
+    select{border:1px solid #435473;color:#e8f5f5;border-radius:10px;padding:10px;background:#0f1b2d;font:inherit;max-width:100%;width:100%}
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}.switch{display:flex;align-items:center;gap:10px;color:#b9cee0;font-size:.93rem}
+    .switch input{width:19px;height:19px;accent-color:#4ed5b3}.hint{font-size:.81rem;color:#98acc5;margin:7px 0 0}
+    footer{font-size:.8rem;color:#8fa2ba;text-align:center;margin-top:24px}
+    @media(max-width:470px){.cols{grid-template-columns:1fr}h1{font-size:1.8rem}main{padding:18px 14px 45px}}
+  </style>
+</head>
+<body>
+<main>
+  <header><div class="eyebrow">Sound experiment · Proof of concept</div><h1>Ambient Audio Lab</h1><p>Generate evolving chords and compare audio modulation techniques. No recordings, no accounts, no subscriptions.</p></header>
+  <section class="card">
+    <div class="bar"><div><h2 style="margin:0 0 5px">Audio engine</h2><div id="status" class="status" role="status">Stopped</div></div><button id="toggle" class="primary" type="button">▶ Start audio</button></div>
+    <div class="control"><label for="master">Master volume <output id="masterVal"></output></label><input id="master" type="range" min="0" max="60" value="25" step="1"></div>
+  </section>
+  <section class="card">
+    <h2>Sound generator</h2>
+    <div class="cols">
+      <div class="control"><label for="palette">Chord palette</label><select id="palette"><option value="warm">Warm / major seventh</option><option value="dream">Dreamy / suspended</option><option value="minor">Dusky / minor</option></select></div>
+      <div class="control"><label for="tempo">Chord duration <output id="tempoVal"></output></label><input id="tempo" type="range" min="4" max="20" value="10" step="1"></div>
+    </div>
+    <div class="control"><label for="pad">Pad level <output id="padVal"></output></label><input id="pad" type="range" min="0" max="100" value="65"></div>
+    <div class="control"><label for="noise">Soft noise level <output id="noiseVal"></output></label><input id="noise" type="range" min="0" max="100" value="18"></div>
+    <div class="control"><label for="brightness">Pad brightness <output id="brightnessVal"></output></label><input id="brightness" type="range" min="150" max="2500" value="950" step="10"></div>
+    <label class="switch"><input id="motion" type="checkbox" checked> Gentle filter movement</label>
+  </section>
+  <section class="card">
+    <h2>Focus experiment: amplitude modulation</h2>
+    <label class="switch"><input id="amOn" type="checkbox" checked> Enable modulation on the ambient mix</label>
+    <div class="control"><label for="amFreq">AM frequency <output id="amFreqVal"></output></label><input id="amFreq" type="range" min="1" max="40" value="16" step=".5"></div>
+    <div class="control"><label for="amDepth">AM depth <output id="amDepthVal"></output></label><input id="amDepth" type="range" min="0" max="100" value="45"></div>
+    <p class="hint">Modulates the music's amplitude at a chosen rate. This is an experimental acoustic effect, not a proven focus treatment.</p>
+  </section>
+  <section class="card">
+    <h2>Binaural beat generator</h2>
+    <label class="switch"><input id="binauralOn" type="checkbox"> Enable separate left/right tones</label>
+    <div class="control"><label for="carrier">Carrier frequency <output id="carrierVal"></output></label><input id="carrier" type="range" min="100" max="500" value="220" step="5"></div>
+    <div class="control"><label for="beat">Beat difference <output id="beatVal"></output></label><input id="beat" type="range" min="1" max="40" value="16" step=".5"></div>
+    <div class="control"><label for="binauralMix">Tone mix <output id="binauralMixVal"></output></label><input id="binauralMix" type="range" min="0" max="35" value="12"></div>
+    <p class="hint">Stereo headphones required: left ear receives the carrier and right ear receives carrier + beat difference. Keep volumes low.</p>
+  </section>
+  <section class="card">
+    <h2>Experiment controls</h2>
+    <div class="bar"><button id="bypass" type="button">Bypass all modulation</button><button id="reset" type="button">Reset settings</button></div>
+    <p class="hint">Toggle effects while holding the background music constant. For a fairer comparison, match perceived loudness and record your actual task results.</p>
+  </section>
+  <footer>Locally synthesised with the Web Audio API · Works offline after first successful load · Background playback may be interrupted by mobile OS power management.</footer>
+</main>
+<script type="module">
+const defaults={master:25,palette:'warm',tempo:10,pad:65,noise:18,brightness:950,motion:true,amOn:true,amFreq:16,amDepth:45,binauralOn:false,carrier:220,beat:16,binauralMix:12};
+const ids=Object.keys(defaults);const el=id=>document.getElementById(id);
+let state={...defaults};try{const saved=JSON.parse(localStorage.getItem('ambient-audio-settings')||'{}');for(const id of ids){if(typeof saved[id]===typeof defaults[id])state[id]=saved[id]}}catch{}
+const labels={master:v=>v+'%',tempo:v=>v+' s',pad:v=>v+'%',noise:v=>v+'%',brightness:v=>v+' Hz',amFreq:v=>v+' Hz',amDepth:v=>v+'%',carrier:v=>v+' Hz',beat:v=>v+' Hz',binauralMix:v=>v+'%'};
+function refresh(){for(const id of ids){const node=el(id);if(node.type==='checkbox')node.checked=state[id];else node.value=state[id];if(labels[id])el(id+'Val').textContent=labels[id](state[id])}}
+const clamp=(x,min,max)=>Math.min(max,Math.max(min,x));
+let ctx,master,ambientBus,amGain,amLfo,amAmount,noiseGain,noiseSource,padBus,filter,filterLfo,filterAmount,binauralGain,leftOsc,rightOsc,active=false,chordTimer=null,chordIndex=0,voices=[];
+const chords={
+ warm:[[48,55,59,64],[45,52,55,60],[41,48,52,57],[43,50,57,62]],
+ dream:[[48,55,60,62],[45,52,57,60],[41,48,55,60],[43,50,55,62]],
+ minor:[[45,52,57,60],[41,48,52,57],[38,45,50,53],[40,47,52,55]]
+};
+const hz=midi=>440*Math.pow(2,(midi-69)/12);
+function level(v){return Math.pow(Number(v)/100,1.7)}
+function createNoiseBuffer(){const buf=ctx.createBuffer(1,ctx.sampleRate*3,ctx.sampleRate),data=buf.getChannelData(0);let b0=0,b1=0,b2=0;for(let i=0;i<data.length;i++){const white=Math.random()*2-1;b0=.99765*b0+white*.0990460;b1=.963*b1+white*.2965164;b2=.57*b2+white*1.0526913;data[i]=clamp((b0+b1+b2+white*.1848)*.12,-1,1)}return buf}
+function updateAudio(){if(!ctx)return;const t=ctx.currentTime;master.gain.setTargetAtTime(level(state.master)*.65,t,.04);padBus.gain.setTargetAtTime(level(state.pad)*.22,t,.15);noiseGain.gain.setTargetAtTime(level(state.noise)*.16,t,.15);filter.frequency.setTargetAtTime(Number(state.brightness),t,.2);
+ const d=state.amOn?Number(state.amDepth)/100:0;amGain.gain.setTargetAtTime(1-d/2,t,.03);amAmount.gain.setTargetAtTime(d/2,t,.03);amLfo.frequency.setTargetAtTime(Number(state.amFreq),t,.04);
+ const mix=state.binauralOn?Number(state.binauralMix)/100:0;binauralGain.gain.setTargetAtTime(mix*.2,t,.05);leftOsc.frequency.setTargetAtTime(Number(state.carrier),t,.05);rightOsc.frequency.setTargetAtTime(Number(state.carrier)+Number(state.beat),t,.05);
+ filterAmount.gain.setTargetAtTime(state.motion?Math.min(200,Number(state.brightness)*.16):0,t,.25)
+}
+function makeVoice(midi,now,duration){const amp=ctx.createGain();amp.gain.setValueAtTime(0,now);amp.gain.linearRampToValueAtTime(.44,now+Math.min(2.8,duration*.35));amp.gain.setValueAtTime(.44,now+duration);amp.gain.linearRampToValueAtTime(0,now+duration+3);amp.connect(padBus);
+ const pair=[{type:'sine',detune:-3,gain:.65},{type:'triangle',detune:3,gain:.17}];const oscillators=[];for(const p of pair){const o=ctx.createOscillator(),g=ctx.createGain();o.type=p.type;o.frequency.value=hz(midi);o.detune.value=p.detune;g.gain.value=p.gain;o.connect(g).connect(amp);o.start(now);o.stop(now+duration+3.1);oscillators.push(o)}
+ oscillators[0].onended=()=>{try{amp.disconnect()}catch{}};voices.push(...oscillators)
+}
+function playChord(){if(!ctx||!active)return;const notes=chords[state.palette][chordIndex%4],now=ctx.currentTime,duration=Number(state.tempo);chordIndex++;for(const n of notes)makeVoice(n,now,duration);voices=voices.filter(o=>o.context.state!=='closed');chordTimer=setTimeout(playChord,duration*1000)}
+function stopVoices(){for(const o of voices){try{o.stop()}catch{}}voices=[]}
+async function start(){if(active)return;try{
+ ctx=new AudioContext();await ctx.resume();master=ctx.createGain();master.gain.value=0;const compressor=ctx.createDynamicsCompressor();compressor.threshold.value=-15;compressor.knee.value=16;compressor.ratio.value=10;compressor.attack.value=.005;compressor.release.value=.2;compressor.connect(master).connect(ctx.destination);
+ ambientBus=ctx.createGain();ambientBus.gain.value=.8;amGain=ctx.createGain();ambientBus.connect(amGain).connect(compressor);
+ amLfo=ctx.createOscillator();amAmount=ctx.createGain();amLfo.type='sine';amLfo.connect(amAmount).connect(amGain.gain);amLfo.start();
+ filter=ctx.createBiquadFilter();filter.type='lowpass';filter.Q.value=.3;filter.connect(ambientBus);
+ filterLfo=ctx.createOscillator();filterLfo.frequency.value=.055;filterAmount=ctx.createGain();filterLfo.connect(filterAmount).connect(filter.frequency);filterLfo.start();
+ padBus=ctx.createGain();padBus.connect(filter);
+ noiseGain=ctx.createGain();noiseGain.connect(filter);noiseSource=ctx.createBufferSource();noiseSource.buffer=createNoiseBuffer();noiseSource.loop=true;noiseSource.connect(noiseGain);noiseSource.start();
+ binauralGain=ctx.createGain();binauralGain.gain.value=0;const merge=ctx.createChannelMerger(2);leftOsc=ctx.createOscillator();rightOsc=ctx.createOscillator();leftOsc.type='sine';rightOsc.type='sine';leftOsc.connect(merge,0,0);rightOsc.connect(merge,0,1);merge.connect(binauralGain).connect(compressor);leftOsc.start();rightOsc.start();
+ active=true;updateAudio();playChord();el('toggle').textContent='■ Stop audio';el('status').textContent='Playing · locally generated';
+ }catch(err){console.error(err);el('status').textContent='Unable to start audio: '+(err.message||err);if(ctx){await ctx.close().catch(()=>{});ctx=null}active=false}}
+async function stop(){if(!ctx)return;active=false;clearTimeout(chordTimer);const old=ctx;ctx=null;el('toggle').disabled=true;try{await old.close()}catch{}voices=[];el('toggle').disabled=false;el('toggle').textContent='▶ Start audio';el('status').textContent='Stopped'}
+el('toggle').addEventListener('click',()=>active?stop():start());
+for(const id of ids){const node=el(id);node.addEventListener(node.type==='checkbox'||node.tagName==='SELECT'?'change':'input',()=>{state[id]=node.type==='checkbox'?node.checked:typeof defaults[id]==='number'?Number(node.value):node.value;localStorage.setItem('ambient-audio-settings',JSON.stringify(state));refresh();updateAudio();if(id==='palette'&&active){clearTimeout(chordTimer);chordIndex=0;playChord()}})}
+el('bypass').addEventListener('click',()=>{const bypass=state.amOn||state.binauralOn;state.amOn=!bypass;state.binauralOn=!bypass;localStorage.setItem('ambient-audio-settings',JSON.stringify(state));refresh();updateAudio();el('bypass').textContent=bypass?'Restore modulation':'Bypass all modulation'});
+el('reset').addEventListener('click',()=>{state={...defaults};localStorage.removeItem('ambient-audio-settings');refresh();updateAudio();el('bypass').textContent='Bypass all modulation'});
+document.addEventListener('visibilitychange',()=>{if(ctx&&ctx.state==='suspended')el('status').textContent='Audio paused by browser; reopen app to resume'});
+refresh();if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.warn));
+</script>
+</body>
+</html>
