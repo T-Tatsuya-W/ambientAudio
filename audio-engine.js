@@ -36,9 +36,21 @@ export class AmbientEngine {
   this.padBus=c.createGain();
   const filter=c.createBiquadFilter();filter.type='lowpass';filter.Q.value=.3;this.filter=filter;
   this.padBus.connect(filter);
-  this.amGain=c.createGain();filter.connect(this.amGain).connect(comp);
-  this.amAmount=c.createGain();this.amLfo=c.createOscillator();
-  this.amLfo.connect(this.amAmount).connect(this.amGain.gain);this.amLfo.start();
+  // Modulate the same pad signal separately in L/R without altering its pitches.
+  // A single oscillator is routed with either matching or opposite polarity.
+  // In-phase: L = B + A*sin(t), R = B + A*sin(t).
+  // Alternating: L = B + A*sin(t), R = B - A*sin(t).
+  // B=1-depth/2 and A=depth/2; envelopes always stay in [1-depth, 1].
+  this.amLeft=c.createGain();this.amRight=c.createGain();
+  const padStereo=c.createChannelMerger(2);
+  filter.connect(this.amLeft);filter.connect(this.amRight);
+  this.amLeft.connect(padStereo,0,0);this.amRight.connect(padStereo,0,1);
+  padStereo.connect(comp);
+  this.amLeftAmount=c.createGain();this.amRightAmount=c.createGain();
+  this.amLfo=c.createOscillator();this.amLfo.type='sine';
+  this.amLfo.connect(this.amLeftAmount).connect(this.amLeft.gain);
+  this.amLfo.connect(this.amRightAmount).connect(this.amRight.gain);
+  this.amLfo.start();
   this.filterMod=c.createGain();this.filterLfo=c.createOscillator();this.filterLfo.frequency.value=.055;
   this.filterLfo.connect(this.filterMod).connect(filter.frequency);this.filterLfo.start();
   this.noiseGain=c.createGain();this.noiseGain.gain.value=0;
@@ -87,7 +99,12 @@ export class AmbientEngine {
   safe(this.filter.frequency,s.brightness,.2);
   safe(this.filterMod.gain,s.motion?Math.min(200,s.brightness*.16):0,.25);
   const d=s.amOn?s.amDepth/100:0;
-  safe(this.amGain.gain,1-d/2,.04);safe(this.amAmount.gain,d/2,.04);safe(this.amLfo.frequency,s.amFreq,.04);
+  const alternating=s.amMode==='alternating';
+  safe(this.amLeft.gain,1-d/2,.04);
+  safe(this.amRight.gain,1-d/2,.04);
+  safe(this.amLeftAmount.gain,d/2,.04);
+  safe(this.amRightAmount.gain,alternating?-d/2:d/2,.04);
+  safe(this.amLfo.frequency,s.amFreq,.04);
   // Stereo tones exactly straddle the continuous reference frequency.
   const root=this.rootHz,half=s.beat/2;
   safe(this.droneOsc.frequency,root,.12);
