@@ -29,7 +29,7 @@
 <main>
   <header><div class="eyebrow">Sound experiment · Proof of concept</div><h1>Ambient Audio Lab</h1><p>Generate evolving chords and compare audio modulation techniques. No recordings, no accounts, no subscriptions.</p></header>
   <section class="card">
-    <div class="bar"><div><h2 style="margin:0 0 5px">Audio engine</h2><div id="status" class="status" role="status">Stopped</div></div><button id="toggle" class="primary" type="button">▶ Start audio</button></div>
+    <div class="bar"><div><h2 style="margin:0 0 5px">Audio engine</h2><div id="status" class="status" role="status">Stopped</div></div><div class="bar"><button id="toggle" class="primary" type="button">▶ Start audio</button><button id="stop" type="button">■ Stop</button></div></div>
     <div class="control"><label for="master">Master volume <output id="masterVal"></output></label><input id="master" type="range" min="0" max="60" value="25" step="1"></div>
   </section>
   <section class="card">
@@ -66,51 +66,5 @@
   <footer>Locally synthesised with the Web Audio API · Works offline after first successful load · Media controls depend on browser support; Android may still suspend audio when locked.</footer>
 </main>
 <script type="module" src="./app.js"></script>
-<!--
-const defaults={master:25,palette:'warm',tempo:10,pad:65,noise:18,brightness:950,motion:true,amOn:true,amFreq:16,amDepth:45,binauralOn:false,carrier:220,beat:16,binauralMix:12};
-const ids=Object.keys(defaults);const el=id=>document.getElementById(id);
-let state={...defaults};try{const saved=JSON.parse(localStorage.getItem('ambient-audio-settings')||'{}');for(const id of ids){if(typeof saved[id]===typeof defaults[id])state[id]=saved[id]}}catch{}
-const labels={master:v=>v+'%',tempo:v=>v+' s',pad:v=>v+'%',noise:v=>v+'%',brightness:v=>v+' Hz',amFreq:v=>v+' Hz',amDepth:v=>v+'%',carrier:v=>v+' Hz',beat:v=>v+' Hz',binauralMix:v=>v+'%'};
-function refresh(){for(const id of ids){const node=el(id);if(node.type==='checkbox')node.checked=state[id];else node.value=state[id];if(labels[id])el(id+'Val').textContent=labels[id](state[id])}}
-const clamp=(x,min,max)=>Math.min(max,Math.max(min,x));
-let ctx,master,ambientBus,amGain,amLfo,amAmount,noiseGain,noiseSource,padBus,filter,filterLfo,filterAmount,binauralGain,leftOsc,rightOsc,active=false,chordTimer=null,chordIndex=0,voices=[];
-const chords={
- warm:[[48,55,59,64],[45,52,55,60],[41,48,52,57],[43,50,57,62]],
- dream:[[48,55,60,62],[45,52,57,60],[41,48,55,60],[43,50,55,62]],
- minor:[[45,52,57,60],[41,48,52,57],[38,45,50,53],[40,47,52,55]]
-};
-const hz=midi=>440*Math.pow(2,(midi-69)/12);
-function level(v){return Math.pow(Number(v)/100,1.7)}
-function createNoiseBuffer(){const buf=ctx.createBuffer(1,ctx.sampleRate*3,ctx.sampleRate),data=buf.getChannelData(0);let b0=0,b1=0,b2=0;for(let i=0;i<data.length;i++){const white=Math.random()*2-1;b0=.99765*b0+white*.0990460;b1=.963*b1+white*.2965164;b2=.57*b2+white*1.0526913;data[i]=clamp((b0+b1+b2+white*.1848)*.12,-1,1)}return buf}
-function updateAudio(){if(!ctx)return;const t=ctx.currentTime;master.gain.setTargetAtTime(level(state.master)*.65,t,.04);padBus.gain.setTargetAtTime(level(state.pad)*.22,t,.15);noiseGain.gain.setTargetAtTime(level(state.noise)*.16,t,.15);filter.frequency.setTargetAtTime(Number(state.brightness),t,.2);
- const d=state.amOn?Number(state.amDepth)/100:0;amGain.gain.setTargetAtTime(1-d/2,t,.03);amAmount.gain.setTargetAtTime(d/2,t,.03);amLfo.frequency.setTargetAtTime(Number(state.amFreq),t,.04);
- const mix=state.binauralOn?Number(state.binauralMix)/100:0;binauralGain.gain.setTargetAtTime(mix*.2,t,.05);leftOsc.frequency.setTargetAtTime(Number(state.carrier),t,.05);rightOsc.frequency.setTargetAtTime(Number(state.carrier)+Number(state.beat),t,.05);
- filterAmount.gain.setTargetAtTime(state.motion?Math.min(200,Number(state.brightness)*.16):0,t,.25)
-}
-function makeVoice(midi,now,duration){const amp=ctx.createGain();amp.gain.setValueAtTime(0,now);amp.gain.linearRampToValueAtTime(.44,now+Math.min(2.8,duration*.35));amp.gain.setValueAtTime(.44,now+duration);amp.gain.linearRampToValueAtTime(0,now+duration+3);amp.connect(padBus);
- const pair=[{type:'sine',detune:-3,gain:.65},{type:'triangle',detune:3,gain:.17}];const oscillators=[];for(const p of pair){const o=ctx.createOscillator(),g=ctx.createGain();o.type=p.type;o.frequency.value=hz(midi);o.detune.value=p.detune;g.gain.value=p.gain;o.connect(g).connect(amp);o.start(now);o.stop(now+duration+3.1);oscillators.push(o)}
- oscillators[0].onended=()=>{try{amp.disconnect()}catch{};voices=voices.filter(o=>!oscillators.includes(o))};voices.push(...oscillators)
-}
-function playChord(){if(!ctx||!active)return;const notes=chords[state.palette][chordIndex%4],now=ctx.currentTime,duration=Number(state.tempo);chordIndex++;for(const n of notes)makeVoice(n,now,duration);chordTimer=setTimeout(playChord,duration*1000)}
-function stopVoices(){for(const o of voices){try{o.stop()}catch{}}voices=[]}
-async function start(){if(active)return;try{
- ctx=new AudioContext();await ctx.resume();master=ctx.createGain();master.gain.value=0;const compressor=ctx.createDynamicsCompressor();compressor.threshold.value=-15;compressor.knee.value=16;compressor.ratio.value=10;compressor.attack.value=.005;compressor.release.value=.2;compressor.connect(master).connect(ctx.destination);
- ambientBus=ctx.createGain();ambientBus.gain.value=.8;amGain=ctx.createGain();ambientBus.connect(amGain).connect(compressor);
- amLfo=ctx.createOscillator();amAmount=ctx.createGain();amLfo.type='sine';amLfo.connect(amAmount).connect(amGain.gain);amLfo.start();
- filter=ctx.createBiquadFilter();filter.type='lowpass';filter.Q.value=.3;filter.connect(ambientBus);
- filterLfo=ctx.createOscillator();filterLfo.frequency.value=.055;filterAmount=ctx.createGain();filterLfo.connect(filterAmount).connect(filter.frequency);filterLfo.start();
- padBus=ctx.createGain();padBus.connect(filter);
- noiseGain=ctx.createGain();noiseGain.connect(filter);noiseSource=ctx.createBufferSource();noiseSource.buffer=createNoiseBuffer();noiseSource.loop=true;noiseSource.connect(noiseGain);noiseSource.start();
- binauralGain=ctx.createGain();binauralGain.gain.value=0;const merge=ctx.createChannelMerger(2);leftOsc=ctx.createOscillator();rightOsc=ctx.createOscillator();leftOsc.type='sine';rightOsc.type='sine';leftOsc.connect(merge,0,0);rightOsc.connect(merge,0,1);merge.connect(binauralGain).connect(compressor);leftOsc.start();rightOsc.start();
- active=true;updateAudio();playChord();el('toggle').textContent='■ Stop audio';el('status').textContent='Playing · locally generated';
- }catch(err){console.error(err);el('status').textContent='Unable to start audio: '+(err.message||err);if(ctx){await ctx.close().catch(()=>{});ctx=null}active=false}}
-async function stop(){if(!ctx)return;active=false;clearTimeout(chordTimer);const old=ctx;ctx=null;el('toggle').disabled=true;try{await old.close()}catch{}voices=[];el('toggle').disabled=false;el('toggle').textContent='▶ Start audio';el('status').textContent='Stopped'}
-el('toggle').addEventListener('click',()=>active?stop():start());
-for(const id of ids){const node=el(id);node.addEventListener(node.type==='checkbox'||node.tagName==='SELECT'?'change':'input',()=>{state[id]=node.type==='checkbox'?node.checked:typeof defaults[id]==='number'?Number(node.value):node.value;localStorage.setItem('ambient-audio-settings',JSON.stringify(state));refresh();updateAudio();if(id==='palette'&&active){clearTimeout(chordTimer);chordIndex=0;playChord()}})}
-el('bypass').addEventListener('click',()=>{const bypass=state.amOn||state.binauralOn;state.amOn=!bypass;state.binauralOn=!bypass;localStorage.setItem('ambient-audio-settings',JSON.stringify(state));refresh();updateAudio();el('bypass').textContent=bypass?'Restore modulation':'Bypass all modulation'});
-el('reset').addEventListener('click',()=>{state={...defaults};localStorage.removeItem('ambient-audio-settings');refresh();updateAudio();el('bypass').textContent='Bypass all modulation'});
-document.addEventListener('visibilitychange',()=>{if(ctx&&ctx.state==='suspended')el('status').textContent='Audio paused by browser; reopen app to resume'});
-refresh();if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.warn));
--->
 </body>
 </html>
