@@ -52,6 +52,10 @@
   <section class="card">
     <h2>Focus experiment: amplitude modulation</h2>
     <label class="switch"><input id="amOn" type="checkbox" checked> Enable amplitude modulation on the chord pads</label>
+    <div class="control"><label for="amMode">Stereo modulation pattern</label>
+      <select id="amMode"><option value="inphase">In phase — both ears together</option><option value="alternating">Alternating ears — opposite phase</option></select>
+    </div>
+    <p class="hint">Alternating mode pulses the left and right pad channels 180° out of phase. Use stereo headphones to hear the effect. The drone and noise are not AM-modulated.</p>
     <div class="control"><label for="amFreq">AM frequency <output id="amFreqVal"></output></label><input id="amFreq" type="range" min="1" max="40" value="16" step=".5"></div>
     <div class="control"><label for="amDepth">AM depth <output id="amDepthVal"></output></label><input id="amDepth" type="range" min="0" max="100" value="45"></div>
     <p class="hint">Modulates the music's amplitude at a chosen rate. This is an experimental acoustic effect, not a proven focus treatment.</p>
