@@ -100,7 +100,7 @@ export class AmbientEngine {
  }
  // hzValues is an array of actual frequencies, including non-12TET notes.
  scheduleFrequencies(hzValues,start,duration){
-  const c=this.ctx,voice={start,end:start+duration+3.1,osc:[],amps:[]};
+  const c=this.ctx,voice={start,end:start+duration+3.1,osc:[],amps:[],pending:0};
   const attack=Math.min(2.8,duration*.35),release=3;
   for(const frequency of hzValues){
    if(!Number.isFinite(frequency)||frequency<20||frequency>10000)continue;
@@ -114,7 +114,8 @@ export class AmbientEngine {
     osc.type=type;osc.frequency.value=frequency;osc.detune.value=detune;g.gain.value=weight;
     osc.connect(g).connect(amp);
     osc.start(start);osc.stop(start+duration+release+.04);
-    osc.onended=()=>{try{osc.disconnect();g.disconnect()}catch{}};
+    voice.pending++;
+    osc.onended=()=>{try{osc.disconnect();g.disconnect()}catch{};if(--voice.pending===0){for(const a of voice.amps)try{a.disconnect()}catch{}}};
     voice.osc.push(osc);
    }
   }
@@ -138,10 +139,20 @@ export class AmbientEngine {
   });
  }
  clearVoices(){
+  const now=this.ctx.currentTime;
   for(const v of this.voices){
-   for(const osc of v.osc){osc.onended=null;try{osc.stop()}catch{}try{osc.disconnect()}catch{}}
-   for(const amp of v.amps){try{amp.disconnect()}catch{}}
-  }this.voices=[];
+   // Avoid a hard signal discontinuity when switching progressions or roots.
+   for(const amp of v.amps){
+    try{
+     if(typeof amp.gain.cancelAndHoldAtTime==='function')amp.gain.cancelAndHoldAtTime(now);
+     else {amp.gain.cancelScheduledValues(now);amp.gain.setValueAtTime(amp.gain.value,now)}
+     amp.gain.linearRampToValueAtTime(0,now+.12);
+    }catch{}
+   }
+   for(const osc of v.osc){try{osc.stop(now+.14)}catch{}}
+  }
+  // onended performs the graph disconnections after the fade.
+  this.voices=[];
  }
  requeue(){
   if(!this.ctx)return;
