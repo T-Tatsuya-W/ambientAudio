@@ -35,28 +35,33 @@
   <section class="card">
     <h2>Sound generator</h2>
     <div class="cols">
-      <div class="control"><label for="palette">Chord palette</label><select id="palette"><option value="warm">Warm / major seventh</option><option value="dream">Dreamy / suspended</option><option value="minor">Dusky / minor</option><option value="horizon">Horizon / 8 chords</option><option value="night">Nightfall / 8 chords</option><option value="floating">Floating / 12 chords</option><option value="journey">Slow journey / 16 chords</option></select></div>
+      <div class="control"><label for="palette">Chord palette</label><select id="palette"><option value="warm">Warm / major seventh</option><option value="dream">Dreamy / suspended</option><option value="minor">Dusky / minor</option><option value="horizon">Horizon / 8 chords</option><option value="night">Nightfall / 8 chords</option><option value="floating">Floating / 12 chords</option><option value="journey">Slow journey / 16 chords</option><option value="pedal">Pedal / continuous drone</option><option value="micro">Microtonal drone / ratios</option></select></div>
       <div class="control"><label for="tempo">Chord duration <output id="tempoVal"></output></label><input id="tempo" type="range" min="4" max="20" value="10" step="1"></div>
     </div>
-    <p id="progressionInfo" class="hint" aria-live="polite"></p><div class="control"><label for="pad">Pad level <output id="padVal"></output></label><input id="pad" type="range" min="0" max="100" value="65"></div>
-    <div class="control"><label for="noise">Soft noise level <output id="noiseVal"></output></label><input id="noise" type="range" min="0" max="100" value="18"></div>
+    <p id="progressionInfo" class="hint" aria-live="polite"></p>
+    <div class="cols"><div class="control"><label class="switch" for="customRoot"><input id="customRoot" type="checkbox"> Custom reference pitch</label><p class="hint">Override the progression's default root.</p></div>
+    <div class="control"><label for="rootHz">Reference frequency <output id="rootHzVal"></output></label><input id="rootHz" type="range" min="55" max="440" value="130.81" step=".01"></div></div>
+    <p id="rootInfo" class="hint"></p><p id="droneInfo" class="hint"></p><div class="control"><label for="pad">Pad level <output id="padVal"></output></label><input id="pad" type="range" min="0" max="100" value="65"></div>
+    <div class="cols">
+      <div class="control"><label for="noise">Noise level <output id="noiseVal"></output></label><input id="noise" type="range" min="0" max="100" value="18"></div>
+      <div class="control"><label for="noiseColour">Noise colour</label><select id="noiseColour"><option value="pink">Pink — balanced soft</option><option value="white">White — bright hiss</option><option value="brown">Brown — deep rumble</option><option value="grey">Grey — perceptually-inspired</option><option value="orange">Orange — warm lowpassed</option></select></div>
+    </div><p class="hint">Noise runs continuously and is not amplitude-modulated with the pads. Grey and orange are experimental colour approximations.</p>
     <div class="control"><label for="brightness">Pad brightness <output id="brightnessVal"></output></label><input id="brightness" type="range" min="150" max="2500" value="950" step="10"></div>
     <label class="switch"><input id="motion" type="checkbox" checked> Gentle filter movement</label>
   </section>
   <section class="card">
     <h2>Focus experiment: amplitude modulation</h2>
-    <label class="switch"><input id="amOn" type="checkbox" checked> Enable modulation on the ambient mix</label>
+    <label class="switch"><input id="amOn" type="checkbox" checked> Enable amplitude modulation on the chord pads</label>
     <div class="control"><label for="amFreq">AM frequency <output id="amFreqVal"></output></label><input id="amFreq" type="range" min="1" max="40" value="16" step=".5"></div>
     <div class="control"><label for="amDepth">AM depth <output id="amDepthVal"></output></label><input id="amDepth" type="range" min="0" max="100" value="45"></div>
     <p class="hint">Modulates the music's amplitude at a chosen rate. This is an experimental acoustic effect, not a proven focus treatment.</p>
   </section>
   <section class="card">
-    <h2>Binaural beat generator</h2>
-    <label class="switch"><input id="binauralOn" type="checkbox"> Enable separate left/right tones</label>
-    <div class="control"><label for="carrier">Carrier frequency <output id="carrierVal"></output></label><input id="carrier" type="range" min="100" max="500" value="220" step="5"></div>
+    <h2>Continuous drone and binaural beats</h2>
+    <label class="switch"><input id="binauralOn" type="checkbox"> Replace fixed drone with binaural stereo pair</label>
     <div class="control"><label for="beat">Beat difference <output id="beatVal"></output></label><input id="beat" type="range" min="1" max="40" value="16" step=".5"></div>
-    <div class="control"><label for="binauralMix">Tone mix <output id="binauralMixVal"></output></label><input id="binauralMix" type="range" min="0" max="35" value="12"></div>
-    <p class="hint">Stereo headphones required: left ear receives the carrier and right ear receives carrier + beat difference. Keep volumes low.</p>
+    <div class="control"><label for="droneLevel">Drone / binaural volume <output id="droneLevelVal"></output></label><input id="droneLevel" type="range" min="0" max="60" value="34"></div>
+    <p id="binauralInfo" class="hint"></p><p class="hint">The drone is constant through all chords in supported presets; no separate unrelated carrier tone is added.</p>
   </section>
   <section class="card">
     <h2>Experiment controls</h2>
