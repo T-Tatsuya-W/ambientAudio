@@ -35,7 +35,7 @@ function createNoiseBuffer(){
  // Seamless loop: overlap/crossfade the last 200 ms into the beginning and
  // use the crossfaded tail as a wrap point.
  const fade=Math.round(ctx.sampleRate*.2),end=data.length;
- for(let i=0;i<fade;i++){const t=i/(fade-1);const tail=data[end-fade+i],head=data[i];data[end-fade+i]=tail*(1-t)+head*t}
+ for(let i=0;i<fade;i++){const t=i/(fade-1);const tail=data[end-fade+i],head=data[0];data[end-fade+i]=tail*(1-t)+head*t}
  return buf;
 }
 function setStatus(message){el('status').textContent=message}
@@ -160,7 +160,7 @@ async function resumePlayback(){
  }catch(error){setStatus('Could not resume: '+error.message)}
 }
 async function start(){
- if(active){if(paused)await resumePlayback();else await pausePlayback();return}
+ if(active){if(paused||ctx?.state==='suspended')await resumePlayback();else await pausePlayback();return}
  const token=++sessionId;
  try{
   ctx=new AudioContext();await ctx.resume();
@@ -205,6 +205,7 @@ async function stop(){
  usingMediaElement=false;el('toggle').textContent='▶ Start audio';setStatus('Stopped');updateSession();
 }
 el('toggle').addEventListener('click',()=>start());
+el('stop').addEventListener('click',()=>stop());
 for(const id of ids){
  const node=el(id);node.addEventListener(node.type==='checkbox'||node.tagName==='SELECT'?'change':'input',()=>{
   const previous=state[id];
