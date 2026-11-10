@@ -173,9 +173,6 @@ async function start(){
   outputElement=document.createElement('audio');outputElement.srcObject=streamOutput.stream;
   outputElement.autoplay=false;outputElement.playsInline=true;outputElement.setAttribute('playsinline','');
   outputElement.style.display='none';document.body.append(outputElement);
-  try{await outputElement.play();usingMediaElement=true}
-  catch(e){console.warn('Media stream element not supported, falling back:',e);master.connect(ctx.destination);usingMediaElement=false}
-  if(token!==sessionId)return;
   const ambientBus=ctx.createGain(),noiseSource=ctx.createBufferSource();
   amGain=ctx.createGain();ambientBus.connect(amGain).connect(compressor);
   amLfo=ctx.createOscillator();amAmount=ctx.createGain();amLfo.type='sine';amLfo.connect(amAmount).connect(amGain.gain);amLfo.start();
@@ -187,6 +184,10 @@ async function start(){
   const merge=ctx.createChannelMerger(2);leftOsc=ctx.createOscillator();rightOsc=ctx.createOscillator();
   leftOsc.connect(merge,0,0);rightOsc.connect(merge,0,1);merge.connect(binauralGain).connect(compressor);
   leftOsc.start();rightOsc.start();
+  // Start the media element only after the audio graph is generating samples.
+  try{await outputElement.play();usingMediaElement=true}
+  catch(e){console.warn('Media stream element not supported, falling back:',e);master.connect(ctx.destination);usingMediaElement=false}
+  if(token!==sessionId)return;
   active=true;paused=false;chordIndex=0;nextChordTime=ctx.currentTime+.06;
   updateAudio();fillQueue();timer=setInterval(fillQueue,1000);
   el('toggle').textContent='Ⅱ Pause audio';setStatus('Playing · '+(usingMediaElement?'media playback':'Web Audio'));
