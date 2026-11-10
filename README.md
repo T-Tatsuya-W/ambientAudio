@@ -9,7 +9,7 @@ A free, offline-capable ambient synth and acoustic experiment lab. Native Web Au
 - A steady, uninterrupted drone on supported progressions (not retriggered for each chord).
 - Optional binaural **replacement** of the drone: left ear `rootHz - beatHz/2`, right ear `rootHz + beatHz/2`. Other presets disable binaural controls.
 - Streaming `AudioWorklet` noise textures: white, pink, brown, grey-like and warm orange. Noise runs independently of the amplitude-modulated pads.
-- AM modulation, volume controls, 60-second lookahead scheduling, media-session controls where supported, PWA and offline caching.
+- In-phase or alternating-ear amplitude modulation, volume controls, 60-second lookahead scheduling, media-session controls where supported, PWA and offline caching.
 
 ## Structure
 - `music.js` — progression definitions and pitch resolution, no audio nodes.
@@ -37,6 +37,29 @@ const chord = [
 `resolvePitch(rootHz,pitch)` in `music.js` turns these into Hz. The synth consumes only resolved Hz values. MIDI numbers are used only in a compatibility helper to preserve pitches of the original presets. Future note pickers can generate any frequencies.
 
 The drone is a separate oscillator tied to the reference root frequency, held continuously across chord changes. It is deliberately excluded from each chord's scheduled note list. The mono drone crossfades to/from an equal-level stereo pair for binaural listening. **Headphones required.** Binaural frequencies are symmetric around the root frequency, which is their arithmetic midpoint; the frequency difference is the beat rate.
+
+## Signal routing and stereo amplitude modulation
+
+```text
+music.js (root-relative intervals, ratios, absolute Hz)
+  → app.js (select progression and parameters)
+  → audio-engine.js (scheduleFrequencies([...Hz], start, duration))
+       ├─ Pad oscillators → envelopes → filter → stereo AM → compressor
+       ├─ Persistent mono drone → mono output ──────────┐
+       ├─ Binaural drone replacement → stereo output ───┼→ compressor → master → media element
+       └─ Continuous noise from noise-processor.js ──────┘
+```
+
+**Composition and audio are separate:** `music.js` chooses pitches and converts to Hz. `audio-engine.js` creates and schedules Web Audio nodes and performs both amplitude modulation and binaural splitting. `noise-processor.js` is responsible only for generating coloured noise samples. `app.js` is the interface and saves settings, not DSP.
+
+**In-phase AM:** the shared oscillator drives both channels with the same phase:
+`L(t) = R(t) = 1 - d/2 + (d/2) sin(2π f t)`.
+
+**Alternating-ear AM:** one oscillator drives the pad channels in opposite phase:
+`L(t) = 1 - d/2 + (d/2) sin(2π f t)`, 
+`R(t) = 1 - d/2 - (d/2) sin(2π f t)`.
+
+For depth `d` between 0 and 1, both gains stay within `[1-d, 1]`. These are *amplitude* fluctuations of the chord pads, not pitch modulation or a sound moving through space. At high rates you may perceive an unusual texture rather than discrete left/right pulses. The mono drone and noise bypass AM; binaural beats are separately built from frequency-offset drone tones, not AM.
 
 ## Noise colour notes
 
